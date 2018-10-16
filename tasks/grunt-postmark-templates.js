@@ -63,10 +63,14 @@ module.exports = function (grunt) {
       Subject: template.subject,
       HtmlBody: template.htmlBody || grunt.file.read(template.htmlSrc),
       TextBody: template.textBody || grunt.file.read(template.textSrc),
-      TemplateId: template.templateId
+      TemplateId: template.templateId,
+      Alias: template.alias
     };
 
+
+
     if (expanded.TemplateId) {
+      grunt.log.writeln("in if");
       client.editTemplate(expanded.TemplateId, expanded, function (err, response) {
         if (err && err.code === 1101) {
           grunt.log.warn('Template ' + expanded.TemplateId + ' not found, so attempting create');
@@ -81,7 +85,25 @@ module.exports = function (grunt) {
           handleResponse(err, done, response, template, ephemeralUploadResultsProperty);
         }
       });
-    } else {
+    } 
+    else if (expanded.Alias) {
+      grunt.log.writeln("in else if")
+      client.editTemplate(expanded.Alias, expanded, function (err, response) {
+        if (err && err.code === 1101) {
+          grunt.log.warn('Template ' + expanded.Alias + ' not found, so attempting create');
+          delete template.alias;
+          delete expanded.Alias;
+          client.createTemplate(expanded.Alias, function (err, response) {
+            grunt.log.writeln('Template ' + expanded.Name + ' created: ' + JSON.stringify(response.Alias));
+            handleResponse(err, done, response, template, ephemeralUploadResultsProperty);
+          });
+        } else {
+          grunt.log.writeln('Template ' + expanded.Name + ' updated: ' + JSON.stringify(response.Alias));
+          handleResponse(err, done, response, template, ephemeralUploadResultsProperty);
+        }
+      });
+    }
+    else {
       client.createTemplate(expanded, function (err, response) {
         grunt.log.writeln('Template ' + expanded.Name + ' created: ' + JSON.stringify(response.TemplateId));
         handleResponse(err, done, response, template, ephemeralUploadResultsProperty);
